@@ -1,0 +1,21 @@
+/* styles.css */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+#orbitVisualization {
+    width: 100%;
+    height: 100vh;
+    background-color: #000;
+}
+#controlsPanel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    padding: 20px;
+    box-sizing: border-box;
+}
+/* Rest of the CSS rules */

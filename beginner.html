@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Mechanics - Enhanced Mode</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #orbitVisualization {
+            width: 100%;
+            height: 100vh;
+            background-color: #000;
+        }
+        #controlsPanel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .sliderContainer {
+            margin-bottom: 20px;
+        }
+        .sliderContainer label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .sliderContainer input {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            border-radius: 10px;
+            background: #555;
+            outline: none;
+            margin-top: 5px;
+        }
+        .sliderContainer input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        .sliderContainer input::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #555;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        #starfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="orbitVisualization"></div>
+    <div class="button" id="toggleControlsButton">Show Controls</div>
+    <div id="starfield"></div>
+
+
+    <div id="controlsPanel">
+        <div class="sliderContainer">
+            <label for="sunSpeedSlider">Sun Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="sunSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="mercurySpeedSlider">Mercury Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="mercurySpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="venusSpeedSlider">Venus Speed:</label>
+            <input type="range" min="-0.2" max="-0.01" step="0.001" value="0.01" id="venusSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="earthSpeedSlider">Earth Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="earthSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="marsSpeedSlider">Mars Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="marsSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="jupiterSpeedSlider">Jupiter Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="jupiterSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="saturnSpeedSlider">Saturn Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="saturnSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="uranusSpeedSlider">Uranus Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="uranusSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="neptuneSpeedSlider">Neptune Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="neptuneSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="asteroidSpeedSlider">Asteroid Speed:</label>
+            <input type="range" min="-0.05" max="0.05" step="0.001" value="0.01" id="asteroidSpeedSlider">
+        </div>
+        <div class="sliderContainer">
+            <label for="zoomSlider">Zoom:</label>
+            <input type="range" min="50" max="300" value="100" id="zoomSlider">
+        </div>
+        <div class="button" id="zoomInButton">Zoom In</div>
+        <div class="button" id="zoomOutButton">Zoom Out</div>
+    </div>
+    <div class="button" id="toggleControlsButton">Show Controls</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune;
+        let asteroids = [];
+        let trajectoryPoints = [];
+        let trajectoryIndex = 0;
+        let stars = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('orbitVisualization').appendChild(renderer.domElement);
+            
+                       // Create starfield
+                       createStarfield();
+            let toggleControlsButton = document.getElementById('toggleControlsButton');
+
+            toggleControlsButton.addEventListener('click', function() {
+            controlsPanel.style.display = controlsPanel.style.display === 'none' ? 'block' : 'none';
+
+            });
+            function createStarfield() {
+    for (let i = 0; i < 2000; i++) { // Increase the number of stars
+        let starGeometry = new THREE.SphereGeometry(0.05, 8, 8); // Smaller stars
+        let starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        let star = new THREE.Mesh(starGeometry, starMaterial);
+
+        // Randomly position stars within a larger cube centered at the origin
+        star.position.x = Math.random() * 1000 - 500; // Adjust range as needed
+        star.position.y = Math.random() * 1000 - 500; // Adjust range as needed
+        star.position.z = -Math.random() * 2000; // Shift stars to the background
+
+        stars.push(star);
+        scene.add(star);
+    }
+}
+
+
+            
+
+
+            // Create Sun
+            let textureLoader = new THREE.TextureLoader();
+          
+            let sunGeometry = new THREE.SphereGeometry(80 , 32, 32);
+             let sunTexture = textureLoader.load('s.png', {crossOrigin: null}); // Replace 'earth_texture_with_stripes.jpg' with the path to your texture image
+
+            let sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
+            sun = new THREE.Mesh(sunGeometry, sunMaterial);
+            scene.add(sun);
+
+            let mercuryGeometry = new THREE.SphereGeometry(3 , 32, 32);
+             let mercuryTexture = textureLoader.load('m.png', {crossOrigin: null}); // Replace 'earth_texture_with_stripes.jpg' with the path to your texture image
+            let mercuryMaterial = new THREE.MeshBasicMaterial({ map: mercuryTexture });
+            mercury = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
+            scene.add(mercury);
+
+
+            // Create Venus
+       
+            let venusGeometry = new THREE.SphereGeometry(5 , 32, 32);
+            let venusTexture = textureLoader.load('v.png', {crossOrigin: null}); // Replace 'earth_texture_with_stripes.jpg' with the path to your texture image
+            let venusMaterial = new THREE.MeshBasicMaterial({ map: venusTexture });
+            venus = new THREE.Mesh(venusGeometry, venusMaterial);
+            scene.add(venus);
+            
+            // Create Earth
+            // Create Earth with blue and green stripes
+            let earthGeometry = new THREE.SphereGeometry(7, 32, 32);
+            let earthTexture = textureLoader.load('e.png', {crossOrigin: null}); // Replace 'earth_texture_with_stripes.jpg' with the path to your texture image
+
+            let earthMaterial = new THREE.MeshBasicMaterial({ map: earthTexture });
+            earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(earth);
+
+            // Create Mars
+            
+            let marsGeometry = new THREE.SphereGeometry(5, 32, 32);
+            let marsTexture = textureLoader.load('ma.png', {crossOrigin: null}); 
+            let marsMaterial = new THREE.MeshBasicMaterial({ map: marsTexture });
+            mars = new THREE.Mesh(marsGeometry, marsMaterial);
+            scene.add(mars);
+
+            // Create Jupiter
+
+            let jupiterGeometry = new THREE.SphereGeometry(20, 32, 32);
+            let jupiterTexture = textureLoader.load('j.png', {crossOrigin: null}); 
+            let jupiterMaterial = new THREE.MeshBasicMaterial({ map: jupiterTexture });
+            jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
+            scene.add(jupiter);
+                        
+                    // Create Saturn
+            let saturnGeometry = new THREE.SphereGeometry(15, 32, 32);
+            let saturnTexture = textureLoader.load('sat.png', {crossOrigin: null}); 
+            let saturnMaterial = new THREE.MeshBasicMaterial({ map: saturnTexture });
+            saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
+            scene.add(saturn);
+
+            // Create Saturn's Rings
+            let ringGeometry = new THREE.RingGeometry(17, 22, 64);
+            let ringMaterial = new THREE.MeshBasicMaterial({
+                map: textureLoader.load('rings.png', {crossOrigin: null}), // Replace with path to your ring texture
+                side: THREE.DoubleSide, // Ensure the texture is visible on both sides
+                transparent: true // Enable transparency for realistic appearance
+            });
+            let rings = new THREE.Mesh(ringGeometry, ringMaterial);
+            rings.rotation.x = Math.PI / 2; // Orient the rings correctly
+            saturn.add(rings); // Add rings as a child of Saturn
+
+            let uranusGeometry = new THREE.SphereGeometry(8, 32, 32);
+            let uranusTexture = textureLoader.load('u.png', {crossOrigin: null}); 
+            let uranusMaterial = new THREE.MeshBasicMaterial({ map: uranusTexture });
+            uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
+            scene.add(uranus);
+
+            // Create Neptune
+
+            let neptuneGeometry = new THREE.SphereGeometry(8, 32, 32);
+            let neptuneTexture = textureLoader.load('n.png', {crossOrigin: null}); 
+            let neptuneMaterial = new THREE.MeshBasicMaterial({ map: neptuneTexture });
+            neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
+            scene.add(neptune);
+            
+            // Add irregular-shaped rocks between Mars and Jupiter
+            for (let i = 0; i < 400; i++) { // Adjust the number of rocks as needed
+                let rockSize = randomInRange(1, 3); // Adjust the size range of rocks as needed
+
+                let rockGeometry = new THREE.SphereGeometry(rockSize, 2, 9); // Create irregular shapes
+                let rockMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 });
+                let rock = new THREE.Mesh(rockGeometry, rockMaterial);
+                
+                // Randomly position the rock within the specified region
+                let distance = randomInRange(150, 200); // Adjust the distance range between Mars and Jupiter
+                let angle = randomInRange(0, Math.PI * 2);
+                rock.position.x = distance * Math.cos(angle);
+                rock.position.z = distance * Math.sin(angle);
+
+                // Randomly rotate the rock
+                rock.rotation.x = randomInRange(0, Math.PI * 2);
+                rock.rotation.y = randomInRange(0, Math.PI * 2);
+                rock.rotation.z = randomInRange(0, Math.PI * 2);
+
+                scene.add(rock);
+                asteroids.push(rock);
+            }
+
+            // Set initial camera position
+            camera.position.set(0, 0, 400);
+               // Add ambient light
+               let ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            // Add directional light
+            let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(0, 0, 1).normalize();
+            scene.add(directionalLight);
+            
+
+            
+            // Start animation loop
+            animate();
+
+            // Event listeners
+            document.addEventListener('click', toggleControlsPanel);
+   
+            document.getElementById('zoomInButton').addEventListener('click', zoomIn);
+            document.getElementById('zoomOutButton').addEventListener('click', zoomOut);
+            window.addEventListener('wheel', zoomWithMouseWheel);
+        }
+
+        function animate() {
+            // Update speeds
+            let sunSpeed = getParameter('sunSpeedSlider');
+            let mercurySpeed = getParameter('mercurySpeedSlider');
+            let venusSpeed = getParameter('venusSpeedSlider');
+            let earthSpeed = getParameter('earthSpeedSlider');
+            let marsSpeed = getParameter('marsSpeedSlider');
+            let jupiterSpeed = getParameter('jupiterSpeedSlider');
+            let saturnSpeed = getParameter('saturnSpeedSlider');
+            let uranusSpeed = getParameter('uranusSpeedSlider');
+            let neptuneSpeed = getParameter('neptuneSpeedSlider');
+            let asteroidSpeed = getParameter('asteroidSpeedSlider');
+
+            // Rotate planets around the Sun
+            sun.rotation.y += sunSpeed;
+            mercury.rotation.y += mercurySpeed;
+            venus.rotation.y += venusSpeed;
+            earth.rotation.y += earthSpeed;
+            mars.rotation.y += marsSpeed;
+            jupiter.rotation.y += jupiterSpeed;
+            saturn.rotation.y += saturnSpeed;
+            uranus.rotation.y += uranusSpeed;
+            neptune.rotation.y += neptuneSpeed;
+
+            // Adjust planets' positions based on their rotations around the Sun
+            mercury.position.x = 50 * Math.cos(sun.rotation.y + mercury.rotation.y);
+            mercury.position.z = 50 * Math.sin(sun.rotation.y + mercury.rotation.y);
+
+            venus.position.x = 70 * Math.cos(sun.rotation.y + venus.rotation.y);
+            venus.position.z = 70 * Math.sin(sun.rotation.y + venus.rotation.y);
+
+            earth.position.x = 100 * Math.cos(sun.rotation.y + earth.rotation.y);
+            earth.position.z = 100 * Math.sin(sun.rotation.y + earth.rotation.y);
+
+            mars.position.x = 130 * Math.cos(sun.rotation.y + mars.rotation.y);
+            mars.position.z = 130 * Math.sin(sun.rotation.y + mars.rotation.y);
+
+            // Diagonal orbits
+            jupiter.position.x = 180 * Math.cos(sun.rotation.y + jupiter.rotation.y);
+            jupiter.position.z = 150 * Math.sin(sun.rotation.y + jupiter.rotation.y);
+
+            saturn.position.x = 220 * Math.cos(sun.rotation.y + saturn.rotation.y);
+            saturn.position.z = 180 * Math.sin(sun.rotation.y + saturn.rotation.y);
+
+            // Axial tilt
+            uranus.position.x = 260 * Math.cos(sun.rotation.y + uranus.rotation.y + Math.PI / 6); // 30-degree axial tilt
+            uranus.position.z = 260 * Math.sin(sun.rotation.y + uranus.rotation.y);
+
+            neptune.position.x = 300 * Math.cos(sun.rotation.y + neptune.rotation.y + Math.PI / 2); // 90-degree axial tilt
+            neptune.position.y = 300 * Math.sin(sun.rotation.y + neptune.rotation.y + Math.PI / 2);
+
+            // Update irregular-shaped rocks' positions
+            for (let i = 0; i < asteroids.length; i++) {
+                let asteroid = asteroids[i];
+                let distance = Math.sqrt(asteroid.position.x * asteroid.position.x + asteroid.position.z * asteroid.position.z);
+                let angle = Math.atan2(asteroid.position.z, asteroid.position.x);
+                let orbitalSpeed = asteroidSpeed; // Adjust the orbital speed as needed
+                asteroid.rotation.y += orbitalSpeed; // Rotate around the Sun
+                asteroid.position.x = distance * Math.cos(angle + orbitalSpeed);
+                asteroid.position.z = distance * Math.sin(angle + orbitalSpeed);
+            }
+
+            // Adjust camera position to zoom
+            let zoom = getParameter('zoomSlider');
+            let cameraDistance = zoom * 2;
+            camera.position.z = cameraDistance;
+
+            // Focus the camera on the Sun
+            camera.lookAt(sun.position);
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+
+        // Get parameter value from slider
+        function getParameter(id) {
+            return parseFloat(document.getElementById(id).value);
+        }
+
+        // Functions for interaction
+        function zoomIn() {
+            document.getElementById('zoomSlider').value = parseFloat(document.getElementById('zoomSlider').value) + 10;
+        }
+
+        function zoomOut() {
+            document.getElementById('zoomSlider').value = parseFloat(document.getElementById('zoomSlider').value) - 10;
+        }
+
+        function togglePanelVisibility() {
+            document.getElementById('controlsPanel').classList.toggle('show-panel');
+        }
+
+        function zoomWithMouseWheel(event) {
+            event.preventDefault();
+            let delta = event.deltaY;
+            let zoomSlider = document.getElementById('zoomSlider');
+            zoomSlider.value = parseFloat(zoomSlider.value) + (delta > 0 ? -10 : 10);
+        }
+
+        // Function to generate a random number between min and max (inclusive)
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+    
+        function toggleControlsPanel() {
+        let controlsPanel = document.getElementById('controlsPanel');
+        controlsPanel.style.display = controlsPanel.style.display === 'none' ? 'block' : 'none';
+}
+
+        init();
+
+    </script>
+</body>
+</html>

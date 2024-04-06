@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Mechanics - Advanced Mode</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #orbitVisualization {
+            width: 100%;
+            height: 100vh;
+            background-color: #000;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .control-button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 1.2em;
+            text-decoration: none;
+            color: #fff;
+            background-color: #333;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="orbitVisualization"></div>
+    <div id="controls">
+        <button class="control-button" id="upButton">↑</button>
+        <button class="control-button" id="downButton">↓</button>
+        <button class="control-button" id="leftButton">←</button>
+        <button class="control-button" id="rightButton">→</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Add code for Advanced Mode here
+    </script>
+</body>
+</html>
+<script>
+    let scene, camera, renderer;
+    let sun, earth, moon;
+    let upButton, downButton, leftButton, rightButton;
+    let speed = 2; // Initial speed
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('orbitVisualization').appendChild(renderer.domElement);
+
+        // Create Sun, Earth, and Moon (same as Beginner Mode)
+        // ...
+
+        // Create control buttons
+        upButton = document.getElementById('upButton');
+        downButton = document.getElementById('downButton');
+        leftButton = document.getElementById('leftButton');
+        rightButton = document.getElementById('rightButton');
+
+        upButton.addEventListener('click', () => moveRocket('up'));
+        downButton.addEventListener('click', () => moveRocket('down'));
+        leftButton.addEventListener('click', () => moveRocket('left'));
+        rightButton.addEventListener('click', () => moveRocket('right'));
+
+        camera.position.set(0, 0, 300);
+
+        render();
+    }
+
+    function moveRocket(direction) {
+        // Implement logic to move rocket based on direction and speed
+        // Example: Adjusting position of Earth/Moon relative to Sun
+    }
+
+    // Other functions (render, etc.) remain the same as Beginner Mode
+
+    init();
+</script>
